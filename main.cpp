@@ -2,9 +2,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
-#include "Fluid2D.h"
+#include "ComplexPlane.h"
 
-static Fluid2D* gFluid2D = nullptr;
+//static Fluid2D* gFluid2D = nullptr;
+static ComplexPlane* gComplexPlane = nullptr;
 bool gMouseButtonHeld[3] = { false, false, false };
 bool gMouseButtonDown[3] = { false, false, false };
 bool gMouseButtonUp[3] = { false, false, false };
@@ -33,27 +34,24 @@ int main() {
         return -1;
     }
 
-    gFluid2D = new Fluid2D(gWidth);
+    gComplexPlane = new ComplexPlane(gWidth, gHeight);
     while (!glfwWindowShouldClose(window)) {
-        glViewport(0, 0, gWidth, gHeight);
-        glClearColor(0.3f, 0.3f, 0.8f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        gFluid2D->update(0.125);
-        gFluid2D->render();
+        gComplexPlane->update(0.0005);
+        gComplexPlane->render();
         if(gMouseButtonDown[0]) {
             gMousePreviouPosition = gMousePosition;
         }
         if(gMouseButtonHeld[0]) {
             glm::vec2 offset = gMousePosition - gMousePreviouPosition;
             if (glm::length(offset) > 1.0f) {
-                float x0, x1, y0, y1, dx, dy;
-                x0 = gMousePosition.x / gWidth;
-                y0 = 1.0f - gMousePosition.y / gHeight;
-                x1 = gMousePreviouPosition.x / gWidth;
-                y1 = 1.0f - gMousePreviouPosition.y / gHeight;
-                dx = x0 - x1;
-                dy = y0 - y1;
-                gFluid2D->splat(x0, y0, dx, dy);
+//                float x0, x1, y0, y1, dx, dy;
+//                x0 = gMousePosition.x / gWidth;
+//                y0 = 1.0f - gMousePosition.y / gHeight;
+//                x1 = gMousePreviouPosition.x / gWidth;
+//                y1 = 1.0f - gMousePreviouPosition.y / gHeight;
+//                dx = x0 - x1;
+//                dy = y0 - y1;
+//                gFluid2D->splat(x0, y0, dx, dy);
             }
             gMousePreviouPosition = gMousePosition;
         }
@@ -62,7 +60,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    delete gFluid2D;
+    delete gComplexPlane;
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

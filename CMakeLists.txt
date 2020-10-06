@@ -9,7 +9,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/stb)
 
 add_library(libglad STATIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/glad/src/glad.c)
 
-add_executable(Fluid main.cpp Fluid2D.cpp)
+add_executable(Fluid main.cpp Fluid2D.cpp ComplexPlane.cpp GraphicalUtil.cpp)
 
 target_link_libraries(Fluid libglad)
 target_link_libraries(Fluid ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/glfw/lib/win32/release/glfw3.lib)
