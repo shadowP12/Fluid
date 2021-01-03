@@ -1,27 +1,10 @@
 #include "Fluid2D.h"
 #include "glad/glad.h"
+#include "CommonUtil.h"
 #include "GraphicalUtil.h"
 #include <glm.hpp>
 #include <memory>
 #include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-#define SAFE_DELETE(x) \
-    { \
-        delete x; \
-        x = nullptr; \
-    }
-
-#define SAFE_DELETE_ARRAY(x) \
-    { \
-        delete[] x; \
-        x = nullptr; \
-    }
-static bool readFileData(const std::string& path, std::string& out);
-static void checkShaderCompileErrors(GLuint id);
-static void checkProgramCompileErrors(GLuint id);
 
 float quadVertices[] = {
         // positions   // texCoords
@@ -53,22 +36,22 @@ Fluid2D::Fluid2D(int size) {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     std::string vs, fs;
-    readFileData("Res/Fluid2D/common.vs", vs);
-    readFileData("Res/Fluid2D/common.fs", fs);
+    vs = readProjFileData("/Res/Fluid2D/common.vs");
+    fs = readProjFileData("/Res/Fluid2D/common.fs");
     mCommonProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/Fluid2D/boundary.fs", fs);
+    fs = readProjFileData("/Res/Fluid2D/boundary.fs");
     mBoundaryProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/Fluid2D/splat.fs", fs);
+    fs = readProjFileData("/Res/Fluid2D/splat.fs");
     mSplatProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/Fluid2D/advection.fs", fs);
+    fs = readProjFileData("/Res/Fluid2D/advection.fs");
     mAdvectionProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/Fluid2D/buoyancy.fs", fs);
+    fs = readProjFileData("/Res/Fluid2D/buoyancy.fs");
     mBuoyancyProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/Fluid2D/divergence.fs", fs);
+    fs = readProjFileData("/Res/Fluid2D/divergence.fs");
     mDivergenceProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/Fluid2D/jacobi.fs", fs);
+    fs = readProjFileData("/Res/Fluid2D/jacobi.fs");
     mJacobiProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/Fluid2D/subtractGradient.fs", fs);
+    fs = readProjFileData("/Res/Fluid2D/subtractGradient.fs");
     mSubtractGradientProgram = createProgram(vs.c_str(), fs.c_str());
 
     // fill boundary
@@ -301,18 +284,4 @@ void Fluid2D::splat(float x, float y, float dx, float dy) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     mDensity->swap();
-}
-
-static bool readFileData(const std::string& path, std::string& out) {
-    std::istream* stream = &std::cin;
-    std::ifstream file;
-
-    file.open(path, std::ios_base::binary);
-    stream = &file;
-    if (file.fail()) {
-        printf("cannot open input file %s \n", path.c_str());
-        return false;
-    }
-    out = std::string((std::istreambuf_iterator<char>(*stream)), std::istreambuf_iterator<char>());
-    return true;
 }

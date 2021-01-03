@@ -1,13 +1,9 @@
 #include "ComplexPlane.h"
 #include "glad/glad.h"
+#include "CommonUtil.h"
 #include "GraphicalUtil.h"
 #include <glm.hpp>
 #include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-static bool readFileData(const std::string& path, std::string& out);
 
 static float quadVertices[] = {
         -1.0f,  1.0f,
@@ -36,14 +32,14 @@ ComplexPlane::ComplexPlane(int w, int h) {
     mUpdateTarget = std::make_shared<Framebuffer>(mWidth, mHeight, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_LINEAR);
 
     std::string vs, fs;
-    readFileData("Res/ComplexPlane/blit.vs", vs);
-    readFileData("Res/ComplexPlane/blit.fs", fs);
+    vs = readFileData(getProjDir()+"/Res/ComplexPlane/blit.vs");
+    fs = readFileData(getProjDir()+"/Res/ComplexPlane/blit.fs");
     mBlitProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/ComplexPlane/point.vs", vs);
-    readFileData("Res/ComplexPlane/point.fs", fs);
+    vs = readFileData(getProjDir()+"/Res/ComplexPlane/point.vs");
+    fs = readFileData(getProjDir()+"/Res/ComplexPlane/point.fs");
     mPointProgram = createProgram(vs.c_str(), fs.c_str());
-    readFileData("Res/ComplexPlane/line.vs", vs);
-    readFileData("Res/ComplexPlane/line.fs", fs);
+    vs = readFileData(getProjDir()+"/Res/ComplexPlane/line.vs");
+    fs = readFileData(getProjDir()+"/Res/ComplexPlane/line.fs");
     mLineProgram = createProgram(vs.c_str(), fs.c_str());
 
     mTime = 0.0f;
@@ -118,18 +114,4 @@ void ComplexPlane::render() {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), &mLines[0]);
     glDrawArrays(GL_LINE_STRIP, 0, 6);
     glDisableVertexAttribArray(0);
-}
-
-static bool readFileData(const std::string& path, std::string& out) {
-    std::istream* stream = &std::cin;
-    std::ifstream file;
-
-    file.open(path, std::ios_base::binary);
-    stream = &file;
-    if (file.fail()) {
-        printf("cannot open input file %s \n", path.c_str());
-        return false;
-    }
-    out = std::string((std::istreambuf_iterator<char>(*stream)), std::istreambuf_iterator<char>());
-    return true;
 }

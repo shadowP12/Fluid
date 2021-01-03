@@ -2,10 +2,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
-#include "ComplexPlane.h"
+#include "Fluid2D.h"
+#include "CommonUtil.h"
 
-//static Fluid2D* gFluid2D = nullptr;
-static ComplexPlane* gComplexPlane = nullptr;
+static Fluid2D* gFluid2D = nullptr;
 bool gMouseButtonHeld[3] = { false, false, false };
 bool gMouseButtonDown[3] = { false, false, false };
 bool gMouseButtonUp[3] = { false, false, false };
@@ -30,28 +30,28 @@ int main() {
     glfwSetCursorPosCallback(window, cursorPosCallback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+        LOGE("Failed to initialize GLAD");
         return -1;
     }
 
-    gComplexPlane = new ComplexPlane(gWidth, gHeight);
+    gFluid2D = new Fluid2D(gWidth);
     while (!glfwWindowShouldClose(window)) {
-        gComplexPlane->update(0.0005);
-        gComplexPlane->render();
+        gFluid2D->update(0.125);
+        gFluid2D->render();
         if(gMouseButtonDown[0]) {
             gMousePreviouPosition = gMousePosition;
         }
         if(gMouseButtonHeld[0]) {
             glm::vec2 offset = gMousePosition - gMousePreviouPosition;
             if (glm::length(offset) > 1.0f) {
-//                float x0, x1, y0, y1, dx, dy;
-//                x0 = gMousePosition.x / gWidth;
-//                y0 = 1.0f - gMousePosition.y / gHeight;
-//                x1 = gMousePreviouPosition.x / gWidth;
-//                y1 = 1.0f - gMousePreviouPosition.y / gHeight;
-//                dx = x0 - x1;
-//                dy = y0 - y1;
-//                gFluid2D->splat(x0, y0, dx, dy);
+                float x0, x1, y0, y1, dx, dy;
+                x0 = gMousePosition.x / gWidth;
+                y0 = 1.0f - gMousePosition.y / gHeight;
+                x1 = gMousePreviouPosition.x / gWidth;
+                y1 = 1.0f - gMousePreviouPosition.y / gHeight;
+                dx = x0 - x1;
+                dy = y0 - y1;
+                gFluid2D->splat(x0, y0, dx, dy);
             }
             gMousePreviouPosition = gMousePosition;
         }
@@ -60,7 +60,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    delete gComplexPlane;
+    delete gFluid2D;
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
