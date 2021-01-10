@@ -54,7 +54,7 @@ Fluid2D::Fluid2D(int size) {
     fs = readProjFileData("/Res/Fluid2D/subtractGradient.fs");
     mSubtractGradientProgram = createProgram(vs.c_str(), fs.c_str());
 
-    // fill boundary
+    // 设置边界
     glBindFramebuffer(GL_FRAMEBUFFER, mBoundary->getFramebuffer());
     glViewport(0, 0, mSize, mSize);
     glUseProgram(mBoundaryProgram);
@@ -78,8 +78,10 @@ Fluid2D::~Fluid2D() {
 }
 
 void Fluid2D::update(float dt) {
-    advect(dt);
+    // 应用速度场
     buoyancy(dt);
+    // 计算速度场
+    advect(dt);
     divergence();
     pressure();
     subtractGradient();
@@ -100,51 +102,8 @@ void Fluid2D::render() {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+// 浮力
 void Fluid2D::buoyancy(float dt) {
-    glBindFramebuffer(GL_FRAMEBUFFER, mVelocity->getWriteFramebuffer()->getFramebuffer());
-    glViewport(0, 0, mSize, mSize);
-    glUseProgram(mBuoyancyProgram);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, mVelocity->getReadFramebuffer()->getTexture());
-    glUniform1i(glGetUniformLocation(mBuoyancyProgram, "u_velocity"), 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, mTemperature->getReadFramebuffer()->getTexture());
-    glUniform1i(glGetUniformLocation(mBuoyancyProgram, "u_temperature"), 1);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, mDensity->getReadFramebuffer()->getTexture());
-    glUniform1i(glGetUniformLocation(mBuoyancyProgram, "u_density"), 2);
-
-    glUniform1f(glGetUniformLocation(mBuoyancyProgram, "u_timeStep"), dt);
-    glUniform1f(glGetUniformLocation(mBuoyancyProgram, "u_ambientTemperature"), 0.0f);
-    glUniform1f(glGetUniformLocation(mBuoyancyProgram, "u_sigma"), 1.0f);
-    glUniform1f(glGetUniformLocation(mBuoyancyProgram, "u_kappa"), 0.05f);
-    glBindVertexArray(mQuadVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    mVelocity->swap();
-}
-
-void Fluid2D::advect(float dt) {
-    glBindFramebuffer(GL_FRAMEBUFFER, mVelocity->getWriteFramebuffer()->getFramebuffer());
-    glViewport(0, 0, mSize, mSize);
-    glUseProgram(mAdvectionProgram);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, mBoundary->getTexture());
-    glUniform1i(glGetUniformLocation(mAdvectionProgram, "u_boundary"), 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, mVelocity->getReadFramebuffer()->getTexture());
-    glUniform1i(glGetUniformLocation(mAdvectionProgram, "u_source"), 1);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, mVelocity->getReadFramebuffer()->getTexture());
-    glUniform1i(glGetUniformLocation(mAdvectionProgram, "u_velocity"), 2);
-    glUniform1f(glGetUniformLocation(mAdvectionProgram, "u_timeStep"), dt);
-    glUniform1f(glGetUniformLocation(mAdvectionProgram, "u_dissipation"), 0.99f);
-    glUniform2fv(glGetUniformLocation(mAdvectionProgram, "u_inverseSize"), 1, &glm::vec2(1.0f / mSize, 1.0f / mSize)[0]);
-    glBindVertexArray(mQuadVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    mVelocity->swap();
-
     glBindFramebuffer(GL_FRAMEBUFFER, mTemperature->getWriteFramebuffer()->getFramebuffer());
     glViewport(0, 0, mSize, mSize);
     glUseProgram(mAdvectionProgram);
@@ -184,8 +143,54 @@ void Fluid2D::advect(float dt) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     mDensity->swap();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, mVelocity->getWriteFramebuffer()->getFramebuffer());
+    glViewport(0, 0, mSize, mSize);
+    glUseProgram(mBuoyancyProgram);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mVelocity->getReadFramebuffer()->getTexture());
+    glUniform1i(glGetUniformLocation(mBuoyancyProgram, "u_velocity"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, mTemperature->getReadFramebuffer()->getTexture());
+    glUniform1i(glGetUniformLocation(mBuoyancyProgram, "u_temperature"), 1);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, mDensity->getReadFramebuffer()->getTexture());
+    glUniform1i(glGetUniformLocation(mBuoyancyProgram, "u_density"), 2);
+
+    glUniform1f(glGetUniformLocation(mBuoyancyProgram, "u_timeStep"), dt);
+    glUniform1f(glGetUniformLocation(mBuoyancyProgram, "u_ambientTemperature"), 0.0f);
+    glUniform1f(glGetUniformLocation(mBuoyancyProgram, "u_sigma"), 1.0f);
+    glUniform1f(glGetUniformLocation(mBuoyancyProgram, "u_kappa"), 0.05f);
+    glBindVertexArray(mQuadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    mVelocity->swap();
 }
 
+// 对流
+void Fluid2D::advect(float dt) {
+    glBindFramebuffer(GL_FRAMEBUFFER, mVelocity->getWriteFramebuffer()->getFramebuffer());
+    glViewport(0, 0, mSize, mSize);
+    glUseProgram(mAdvectionProgram);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mBoundary->getTexture());
+    glUniform1i(glGetUniformLocation(mAdvectionProgram, "u_boundary"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, mVelocity->getReadFramebuffer()->getTexture());
+    glUniform1i(glGetUniformLocation(mAdvectionProgram, "u_source"), 1);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, mVelocity->getReadFramebuffer()->getTexture());
+    glUniform1i(glGetUniformLocation(mAdvectionProgram, "u_velocity"), 2);
+    glUniform1f(glGetUniformLocation(mAdvectionProgram, "u_timeStep"), dt);
+    glUniform1f(glGetUniformLocation(mAdvectionProgram, "u_dissipation"), 0.99f);
+    glUniform2fv(glGetUniformLocation(mAdvectionProgram, "u_inverseSize"), 1, &glm::vec2(1.0f / mSize, 1.0f / mSize)[0]);
+    glBindVertexArray(mQuadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    mVelocity->swap();
+}
+
+// 散度
 void Fluid2D::divergence() {
     glBindFramebuffer(GL_FRAMEBUFFER, mDivergence->getFramebuffer());
     glViewport(0, 0, mSize, mSize);
