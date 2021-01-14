@@ -5,6 +5,7 @@
 #include <vector>
 #include <string.h>
 #include <stdarg.h>
+#include "glm.hpp"
 
 #define LOGE(...)                           \
 	do                                            \
@@ -38,6 +39,15 @@
         delete[] x; \
         x = nullptr; \
     }
+
+struct Input {
+    float mouseScrollWheel;
+    bool mouseButtonHeld[3];
+    bool mouseButtonDown[3];
+    bool mouseButtonUp[3];
+    glm::vec2 mousePosition;
+    glm::vec2 mouseLastPosition;
+};
 
 std::string getProjDir();
 

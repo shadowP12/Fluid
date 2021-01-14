@@ -17,8 +17,11 @@ float quadVertices[] = {
         1.0f,  1.0f,  1.0f, 1.0f
 };
 
-Fluid2D::Fluid2D(int size) {
-    mSize = size;
+Fluid2D::Fluid2D(int w, int h, const Input* input) {
+    mWidth = w;
+    mHeight = h;
+    mSize = w;
+    mInput = const_cast<Input*>(input);
     mBoundary = std::make_shared<Framebuffer>(mSize, mSize, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST);
     mDivergence = std::make_shared<Framebuffer>(mSize, mSize, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_NEAREST);
     mDensity = std::make_shared<DoubleFramebuffer>(mSize, mSize, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_LINEAR);
@@ -77,7 +80,7 @@ Fluid2D::~Fluid2D() {
     glDeleteProgram(mSubtractGradientProgram);
 }
 
-void Fluid2D::update(float dt) {
+void Fluid2D::tick(float dt) {
     // 应用速度场
     buoyancy(dt);
     // 计算速度场
@@ -86,7 +89,23 @@ void Fluid2D::update(float dt) {
     pressure();
     subtractGradient();
 
+    // 喷射
+    if(mInput->mouseButtonHeld[0]) {
+        glm::vec2 offset = mInput->mousePosition - mInput->mouseLastPosition;
+        if (glm::length(offset) > 1.0f) {
+            float x0, x1, y0, y1, dx, dy;
+            x0 = mInput->mousePosition.x / mSize;
+            y0 = 1.0f - mInput->mousePosition.y / mSize;
+            x1 = mInput->mouseLastPosition.x / mSize;
+            y1 = 1.0f - mInput->mouseLastPosition.y / mSize;
+            dx = x0 - x1;
+            dy = y0 - y1;
+            splat(x0, y0, dx, dy);
+        }
+    }
     splat(0.5, 0.0, 0.0, 0.0);
+
+    render();
 }
 
 void Fluid2D::render() {

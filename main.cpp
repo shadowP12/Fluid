@@ -3,23 +3,21 @@
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
 #include "Fluid2D.h"
+#include "SPH.h"
 #include "CommonUtil.h"
 
 static Fluid2D* gFluid2D = nullptr;
-bool gMouseButtonHeld[3] = { false, false, false };
-bool gMouseButtonDown[3] = { false, false, false };
-bool gMouseButtonUp[3] = { false, false, false };
-static glm::vec2 gMousePosition;
-static glm::vec2 gMousePreviouPosition;
+static SPH* gSPH = nullptr;
 static int gWidth = 512;
 static int gHeight = 512;
+static Input* gInput = nullptr;
 
 void cursorPosCallback(GLFWwindow * window, double posX, double posY);
 void mouseButtonCallback(GLFWwindow * window, int button, int action, int mods);
 
 int main() {
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -33,53 +31,44 @@ int main() {
         LOGE("Failed to initialize GLAD");
         return -1;
     }
+    gInput = new Input();
+    memset(gInput->mouseButtonUp, 0, sizeof(gInput->mouseButtonUp));
+    memset(gInput->mouseButtonHeld, 0, sizeof(gInput->mouseButtonHeld));
+    memset(gInput->mouseButtonDown, 0, sizeof(gInput->mouseButtonDown));
+    gInput->mouseScrollWheel = 0.0;
 
-    gFluid2D = new Fluid2D(gWidth);
+    gSPH = new SPH(gWidth, gHeight, gInput);
     while (!glfwWindowShouldClose(window)) {
-        gFluid2D->update(0.125);
-        gFluid2D->render();
-        if(gMouseButtonDown[0]) {
-            gMousePreviouPosition = gMousePosition;
-        }
-        if(gMouseButtonHeld[0]) {
-            glm::vec2 offset = gMousePosition - gMousePreviouPosition;
-            if (glm::length(offset) > 1.0f) {
-                float x0, x1, y0, y1, dx, dy;
-                x0 = gMousePosition.x / gWidth;
-                y0 = 1.0f - gMousePosition.y / gHeight;
-                x1 = gMousePreviouPosition.x / gWidth;
-                y1 = 1.0f - gMousePreviouPosition.y / gHeight;
-                dx = x0 - x1;
-                dy = y0 - y1;
-                gFluid2D->splat(x0, y0, dx, dy);
-            }
-            gMousePreviouPosition = gMousePosition;
-        }
-        memset(gMouseButtonUp, 0, sizeof(gMouseButtonUp));
-        memset(gMouseButtonDown, 0, sizeof(gMouseButtonDown));
+        gSPH->tick(0.125);
+        gInput->mouseLastPosition = gInput->mousePosition;
+        memset(gInput->mouseButtonUp, 0, sizeof(gInput->mouseButtonUp));
+        memset(gInput->mouseButtonDown, 0, sizeof(gInput->mouseButtonDown));
+        gInput->mouseScrollWheel = 0.0;
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     delete gFluid2D;
+    delete gInput;
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
 
 void cursorPosCallback(GLFWwindow * window, double posX, double posY) {
-    gMousePosition = glm::vec2(posX, posY);
+    gInput->mousePosition = glm::vec2(posX, posY);
 }
 
 void mouseButtonCallback(GLFWwindow * window, int button, int action, int mods) {
     switch (action)
     {
         case GLFW_PRESS:
-            gMouseButtonDown[button] = true;
-            gMouseButtonHeld[button] = true;
+            gInput->mouseButtonDown[button] = true;
+            gInput->mouseButtonHeld[button] = true;
             break;
         case GLFW_RELEASE:
-            gMouseButtonUp[button] = true;
-            gMouseButtonHeld[button] = false;
+            gInput->mouseButtonUp[button] = true;
+            gInput->mouseButtonHeld[button] = false;
             break;
         default:
             break;

@@ -49,4 +49,6 @@ protected:
 
 uint32_t createProgram(const char* vertexSource, const char* fragmentSource);
 
+uint32_t createComputeProgram(const char* source);
+
 #endif

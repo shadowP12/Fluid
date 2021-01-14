@@ -79,3 +79,21 @@ uint32_t createProgram(const char* vertexSource, const char* fragmentSource) {
 
     return programID;
 }
+
+uint32_t createComputeProgram(const char* source) {
+    GLuint shaderID;
+    shaderID = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(shaderID, 1, &source, NULL);
+    glCompileShader(shaderID);
+    checkShaderCompileErrors(shaderID);
+
+    GLuint programID;
+    programID = glCreateProgram();
+    glAttachShader(programID, shaderID);
+    glLinkProgram(programID);
+    checkProgramCompileErrors(programID);
+
+    glDeleteShader(shaderID);
+
+    return programID;
+}
