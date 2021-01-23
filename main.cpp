@@ -14,6 +14,7 @@ static Input* gInput = nullptr;
 
 void cursorPosCallback(GLFWwindow * window, double posX, double posY);
 void mouseButtonCallback(GLFWwindow * window, int button, int action, int mods);
+void mouseScrollCallback(GLFWwindow * window, double offsetX, double offsetY);
 
 int main() {
     glfwInit();
@@ -26,6 +27,7 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
     glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetScrollCallback(window, mouseScrollCallback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         LOGE("Failed to initialize GLAD");
@@ -53,6 +55,11 @@ int main() {
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
+}
+
+void mouseScrollCallback(GLFWwindow * window, double offsetX, double offsetY)
+{
+    gInput->mouseScrollWheel = offsetY;
 }
 
 void cursorPosCallback(GLFWwindow * window, double posX, double posY) {

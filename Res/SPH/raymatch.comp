@@ -1,10 +1,91 @@
 #version 430 core
-layout (local_size_x=16, local_size_y=16) in;
+layout (local_size_x = 16, local_size_y = 16) in;
 
 layout (rgba32f, binding = 0) uniform image2D u_output;
+layout (std140, binding = 1) uniform Context {
+    vec3 cameraPosition;
+    vec3 cameraRight;
+    vec3 cameraUp;
+    vec3 cameraFront;
+    vec4 cameraParams;
+    vec4 screenParams;
+    int particleCount;
+    float deltaTime;
+};
+
+struct Particle {
+    vec3 curPos;
+    vec3 prePos;
+    vec3 acceleration;
+    vec3 velocity;
+    float density;
+    float pressure;
+};
+
+layout(std430, binding = 2) buffer Particles{
+    Particle particles[];
+};
+
+const int MAX_MARCHING_STEPS = 24;
+const float MIN_DIST = 0.0;
+const float MAX_DIST = 200.0;
+const float EPSILON = 0.01;
+#define PARTICLE_RADIUS 0.25
+
+vec3 genCameraRayDir()
+{
+    float width = float(screenParams.x);
+    float height = float(screenParams.y);
+    float invWidth = 1.0 / width;
+    float invHeight = 1.0 / height;
+    float aspectratio = width / height;
+    float fov = 45.0 * 3.1415926 / 180.0;
+    float angle = tan(0.5 * fov);
+
+    float x = float(gl_GlobalInvocationID.x);// - 0.5f;
+    float y = float(gl_GlobalInvocationID.y);// - 0.5f;
+
+    x = (2.0f * ((x + 0.5f) * invWidth) - 1) * angle * aspectratio;
+    y = (2.0f * ((y + 0.5f) * invHeight - 1)) * angle;
+
+    return normalize(x * cameraRight + y * cameraUp + cameraFront);
+}
+
+float sphereSDF(vec3 p0, vec3 p1, float r) {
+    return length(p1 - p0) - r * r;
+}
+
+float sceneSDF(vec3 samplePoint) {
+    float minDis = MAX_DIST;
+    for (int i = 0; i < particleCount; i++) {
+        float d = sphereSDF(particles[i].curPos, samplePoint, PARTICLE_RADIUS);
+        if (minDis > d) {
+            minDis = d;
+        }
+    }
+    return minDis;
+}
+
+vec3 shortestDistanceToSurface(vec3 ro, vec3 rd) {
+    float t = MIN_DIST;
+    for (int i = 0; i < MAX_MARCHING_STEPS; ++i) {
+        vec3 p = ro + rd * t;
+        float d = sceneSDF(p);
+        if (abs(d) < EPSILON) {
+            return vec3(1.0);
+        }
+        t += d;
+        if (t >= MAX_DIST) {
+            break;
+        }
+    }
+    return vec3(0.0);
+}
 
 void main(void)
 {
+    vec3 rayDir = genCameraRayDir();
+    vec3 output_color = shortestDistanceToSurface(cameraPosition, rayDir);
     ivec2 pos=ivec2(gl_GlobalInvocationID.xy);
-    imageStore(u_output, pos.xy, vec4(1.0, 1.0, 0.0, 0.0));
+    imageStore(u_output, pos.xy, vec4(output_color, 0.0));
 }

@@ -1,0 +1,63 @@
+#version 430 core
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+struct Particle {
+    vec3 curPos;
+    vec3 prePos;
+    vec3 acceleration;
+    vec3 velocity;
+    float density;
+    float pressure;
+};
+
+layout (std140, binding = 0) uniform Context {
+    vec3 cameraPosition;
+    vec3 cameraRight;
+    vec3 cameraUp;
+    vec3 cameraFront;
+    vec4 cameraParams;
+    vec4 screenParams;
+    int particleCount;
+    float deltaTime;
+};
+
+layout(std430, binding = 1) buffer Particles{
+    Particle particles[];
+};
+
+#define PI 3.1415927410125732421875
+#define PARTICLE_RADIUS 0.25
+#define PARTICLE_MASS 65
+#define SMOOTHING_LENGTH (24 * PARTICLE_RADIUS)
+#define PARTICLE_STIFFNESS 200
+#define PARTICLE_RESTING_DENSITY 1000
+#define PARTICLE_VISCOSITY 250.0
+#define GRAVITY_FORCE vec3(0.0, -9.8, 0.0)
+
+void main(void)
+{
+    uint i = gl_GlobalInvocationID.x;
+
+    if (i > particleCount)
+        return;
+
+    float m = PARTICLE_MASS;
+    float h = SMOOTHING_LENGTH;
+    float k = PARTICLE_STIFFNESS;
+    vec3 pressureForce = vec3(0.0);
+    vec3 viscosityForce = vec3(0.0);
+    for (int j = 0; j < particleCount; j++) {
+        if (i == j) {
+            continue;
+        }
+        vec3 delta = particles[i].curPos - particles[j].curPos;
+        float r = length(delta);
+        if (r < h) {
+            pressureForce -= m * (particles[i].pressure + particles[j].pressure) / (2.0 * particles[j].density) * -45.0 / (PI * pow(h, 6)) * pow(h - r, 2) * normalize(delta);
+            viscosityForce += m * (particles[j].velocity - particles[i].velocity) / particles[j].density * 45.0 / (PI * pow(h, 6)) * (h - r);
+        }
+    }
+    viscosityForce *= PARTICLE_VISCOSITY;
+
+    particles[i].acceleration = vec3(pressureForce + viscosityForce + GRAVITY_FORCE) * 0.01;
+}
