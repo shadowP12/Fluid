@@ -92,16 +92,16 @@ SPH::SPH(int w, int h, const Input* input) {
     mDisplayProgram = createProgram(vs.c_str(), fs.c_str());
 
     cs = readFileData(getProjDir()+"/Res/SPH/precompute.comp");
-    mPrecomputeProgram = createComputeProgram(cs.c_str());
+    mPrecomputeProgram = createProgram(cs.c_str());
 
     cs = readFileData(getProjDir()+"/Res/SPH/acceleration.comp");
-    mAccelerationProgram = createComputeProgram(cs.c_str());
+    mAccelerationProgram = createProgram(cs.c_str());
 
     cs = readFileData(getProjDir()+"/Res/SPH/final.comp");
-    mFinalProgram = createComputeProgram(cs.c_str());
+    mFinalProgram = createProgram(cs.c_str());
 
     cs = readFileData(getProjDir()+"/Res/SPH/raymatch.comp");
-    mRayMatchProgram = createComputeProgram(cs.c_str());
+    mRayMatchProgram = createProgram(cs.c_str());
 }
 
 SPH::~SPH() {

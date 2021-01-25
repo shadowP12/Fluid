@@ -47,8 +47,10 @@ protected:
     Framebuffer* mFramebufferB = nullptr;
 };
 
-uint32_t createProgram(const char* vertexSource, const char* fragmentSource);
+uint32_t createProgram(const char* vs, const char* fs);
 
-uint32_t createComputeProgram(const char* source);
+uint32_t createProgram(const char* vs, const char* tcs, const char* tes, const char* fs);
+
+uint32_t createProgram(const char* cs);
 
 #endif

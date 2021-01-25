@@ -55,45 +55,84 @@ static void checkShaderCompileErrors(GLuint id) {
     }
 }
 
-uint32_t createProgram(const char* vertexSource, const char* fragmentSource) {
-    GLuint vertexID, fragmentID;
-    vertexID = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexID, 1, &vertexSource, NULL);
-    glCompileShader(vertexID);
-    checkShaderCompileErrors(vertexID);
+uint32_t createProgram(const char* vs, const char* fs) {
+    GLuint vsId, fsId;
+    vsId = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vsId, 1, &vs, NULL);
+    glCompileShader(vsId);
+    checkShaderCompileErrors(vsId);
 
-    fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentID, 1, &fragmentSource, NULL);
-    glCompileShader(fragmentID);
-    checkShaderCompileErrors(fragmentID);
+    fsId = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fsId, 1, &fs, NULL);
+    glCompileShader(fsId);
+    checkShaderCompileErrors(fsId);
 
     GLuint programID;
     programID = glCreateProgram();
-    glAttachShader(programID, vertexID);
-    glAttachShader(programID, fragmentID);
+    glAttachShader(programID, vsId);
+    glAttachShader(programID, fsId);
     glLinkProgram(programID);
     checkProgramCompileErrors(programID);
 
-    glDeleteShader(vertexID);
-    glDeleteShader(fragmentID);
+    glDeleteShader(vsId);
+    glDeleteShader(fsId);
 
     return programID;
 }
 
-uint32_t createComputeProgram(const char* source) {
-    GLuint shaderID;
-    shaderID = glCreateShader(GL_COMPUTE_SHADER);
-    glShaderSource(shaderID, 1, &source, NULL);
-    glCompileShader(shaderID);
-    checkShaderCompileErrors(shaderID);
+uint32_t createProgram(const char* vs, const char* tcs, const char* tes, const char* fs) {
+    GLuint vsId, tcsId, tesId, fsId;
+    vsId = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vsId, 1, &vs, NULL);
+    glCompileShader(vsId);
+    checkShaderCompileErrors(vsId);
+
+    tcsId = glCreateShader(GL_TESS_CONTROL_SHADER);
+    glShaderSource(tcsId, 1, &tcs, NULL);
+    glCompileShader(tcsId);
+    checkShaderCompileErrors(tcsId);
+
+    tesId = glCreateShader(GL_TESS_EVALUATION_SHADER);
+    glShaderSource(tesId, 1, &tes, NULL);
+    glCompileShader(tesId);
+    checkShaderCompileErrors(tesId);
+
+    fsId = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fsId, 1, &fs, NULL);
+    glCompileShader(fsId);
+    checkShaderCompileErrors(fsId);
 
     GLuint programID;
     programID = glCreateProgram();
-    glAttachShader(programID, shaderID);
+    glAttachShader(programID, vsId);
+    glAttachShader(programID, tcsId);
+    glAttachShader(programID, tesId);
+    glAttachShader(programID, fsId);
     glLinkProgram(programID);
     checkProgramCompileErrors(programID);
 
-    glDeleteShader(shaderID);
+    glDeleteShader(vsId);
+    glDeleteShader(tcsId);
+    glDeleteShader(tesId);
+    glDeleteShader(fsId);
+
+    return programID;
+}
+
+uint32_t createProgram(const char* cs) {
+    GLuint csId;
+    csId = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(csId, 1, &cs, NULL);
+    glCompileShader(csId);
+    checkShaderCompileErrors(csId);
+
+    GLuint programID;
+    programID = glCreateProgram();
+    glAttachShader(programID, csId);
+    glLinkProgram(programID);
+    checkProgramCompileErrors(programID);
+
+    glDeleteShader(csId);
 
     return programID;
 }
